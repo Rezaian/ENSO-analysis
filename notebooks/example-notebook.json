@@ -1,0 +1,309 @@
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 5. Transition Analysis"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Get the path to the ONI data created by the ONI analyzer\n",
+    "oni_file = os.path.join(output_dir, 'oni_data.csv')\n",
+    "\n",
+    "# Initialize the Transition Analyzer\n",
+    "transition_analyzer = TransitionAnalyzer(sst_file, oni_file, output_dir)\n",
+    "\n",
+    "# Load necessary data\n",
+    "transition_analyzer.load_sst_data()\n",
+    "transition_analyzer.load_oni_data()\n",
+    "\n",
+    "# Generate climatology periods (same as for ONI analysis)\n",
+    "transition_analyzer.generate_climatology_periods(start_year, end_year)\n",
+    "\n",
+    "# Process monthly SST data and calculate anomalies\n",
+    "transition_analyzer.process_monthly_sst()\n",
+    "transition_analyzer.calculate_monthly_anomalies()\n",
+    "\n",
+    "# Identify transition years\n",
+    "transition_years = transition_analyzer.identify_enso_transitions()\n",
+    "\n",
+    "# Display transition years for each category\n",
+    "for category, years in transition_years.items():\n",
+    "    if years:  # Only show categories with transitions\n",
+    "        print(f\"{category}: {years}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 6. Creating Transition Datasets and Composites"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Create transition datasets\n",
+    "transition_analyzer.create_transition_datasets()\n",
+    "\n",
+    "# Calculate composite means\n",
+    "transition_analyzer.calculate_composite_means()\n",
+    "\n",
+    "# Prepare Pacific composites for visualization\n",
+    "transition_analyzer.prepare_pacific_composites()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 7. Visualizing Transition Composites"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Plot transition composites\n",
+    "fig = visualizer.plot_enso_transition_composites(\n",
+    "    transition_analyzer,\n",
+    "    save_path='lon_t_sst_plot_example'\n",
+    ")\n",
+    "\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 8. Alternative: Using the Run Method"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# The same analysis can be done more concisely with the run methods\n",
+    "\n",
+    "# Reset output directory\n",
+    "alt_output_dir = '../output/alternative_run'\n",
+    "os.makedirs(alt_output_dir, exist_ok=True)\n",
+    "\n",
+    "# ONI Analysis\n",
+    "alt_oni_analyzer = ONIAnalyzer(sst_file, alt_output_dir)\n",
+    "alt_oni_analyzer.load_sst_data()\n",
+    "alt_oni_analyzer.generate_climatology_periods(start_year, end_year)\n",
+    "alt_oni_analyzer.compute_full_oni()\n",
+    "\n",
+    "# Transition Analysis\n",
+    "alt_oni_file = os.path.join(alt_output_dir, 'oni_data.csv')\n",
+    "alt_transition_analyzer = TransitionAnalyzer(sst_file, alt_oni_file, alt_output_dir)\n",
+    "alt_transition_analyzer.run_transition_analysis()\n",
+    "\n",
+    "# Visualization\n",
+    "alt_visualizer = ENSOVisualizer(alt_output_dir)\n",
+    "alt_visualizer.plot_oni_phases(alt_oni_analyzer.oni_df, alt_oni_analyzer.elnino_thresholds)\n",
+    "alt_visualizer.plot_enso_transition_composites(alt_transition_analyzer)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 9. Analyzing Recent Events"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Filter for recent events (2020 onwards)\n",
+    "recent_events = event_summary[event_summary['Period'].apply(lambda x: int(x[0].split('-')[0]) >= 2020)]\n",
+    "recent_events"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 10. Statistical Summary of ENSO Events"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Count events by phase and intensity\n",
+    "event_counts = pd.crosstab(event_summary['Phase'], event_summary['Intensity'])\n",
+    "event_counts"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Plot event counts\n",
+    "ax = event_counts.plot(kind='bar', figsize=(10, 6))\n",
+    "ax.set_xlabel('ENSO Phase')\n",
+    "ax.set_ylabel('Number of Events')\n",
+    "ax.set_title('ENSO Events by Phase and Intensity (1940-2024)')\n",
+    "plt.tight_layout()\n",
+    "plt.savefig(os.path.join(output_dir, 'enso_event_counts.png'), dpi=300)\n",
+    "plt.show()"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# ENSO Analysis Examples\n",
+    "\n",
+    "This notebook demonstrates the basic functionality of the `enso_analysis` package."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "import os\n",
+    "import pandas as pd\n",
+    "import matplotlib.pyplot as plt\n",
+    "\n",
+    "# Import the ENSO Analysis package\n",
+    "from enso_analysis import ENSOThresholds, ONIAnalyzer, TransitionAnalyzer, ENSOVisualizer"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 1. Setting up paths and configuration"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Path to the SST data file (replace with your actual file path)\n",
+    "sst_file = '../data/era5_sst_1940_2024.nc'\n",
+    "\n",
+    "# Output directory\n",
+    "output_dir = '../output/example_run'\n",
+    "os.makedirs(output_dir, exist_ok=True)\n",
+    "\n",
+    "# Define the analysis period\n",
+    "start_year = 1940\n",
+    "end_year = 2024"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 2. Calculating the Oceanic Niño Index (ONI)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Initialize the ONI Analyzer\n",
+    "oni_analyzer = ONIAnalyzer(sst_file, output_dir)\n",
+    "\n",
+    "# Load SST data and generate climatology periods\n",
+    "oni_analyzer.load_sst_data()\n",
+    "oni_analyzer.generate_climatology_periods(start_year, end_year)\n",
+    "\n",
+    "# Process Niño 3.4 region data\n",
+    "oni_analyzer.process_nino34_data()\n",
+    "\n",
+    "# Compute ONI and perform event analysis\n",
+    "oni_analyzer.compute_full_oni()\n",
+    "\n",
+    "# Display the first few rows of the ONI data\n",
+    "oni_analyzer.oni_df.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 3. Summarizing ENSO Events"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Get a summary of ENSO events\n",
+    "event_summary = oni_analyzer.get_event_summary()\n",
+    "\n",
+    "# Display the summary\n",
+    "event_summary"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 4. Visualizing ONI Phases"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "source": [
+    "# Initialize the visualizer\n",
+    "visualizer = ENSOVisualizer(output_dir)\n",
+    "\n",
+    "    # Plot ONI phases\n",
+    "fig, ax = visualizer.plot_oni_phases(\n",
+    "    oni_analyzer.oni_df, \n",
+    "    oni_analyzer.elnino_thresholds,\n",
+    "    end_date='2025-01-01',\n",
+    "    filename='oni_phases_example'\n",
+    ")\n",
+    "\n",
+    "plt.show()"
